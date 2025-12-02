@@ -68,6 +68,26 @@ class TaskSystemParallelThreadPoolSleeping: public ITaskSystem {
         TaskID runAsyncWithDeps(IRunnable* runnable, int num_total_tasks,
                                 const std::vector<TaskID>& deps);
         void sync();
+    private:
+        struct TaskContext {
+            TaskContext(TaskID id): task_id(id), is_finished(false) {}
+            TaskID task_id;
+            bool is_finished;
+            std::mutex mtx;
+            std::condition_variable cv;
+        };
+        std::unordered_map<TaskID, TaskContext*> task_contexts;
+        std::vector<std::thread> workers;
+        std::mutex mtx_worker;;
+        std::condition_variable cv_worker;
+        std::mutex mtx_finish;
+        std::condition_variable cv_finish;
+        std::atomic<int> next_task_id{0};
+        bool stop;
+        int total_task_num;
+        int left_task_num;
+        int finished_task_num;
+        IRunnable* runner;
 };
 
 #endif
